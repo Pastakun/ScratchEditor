@@ -8,7 +8,7 @@
 <body>
     <input type="file" id="file-input" />
     <pre id="output"></pre>
-
+    <textarea id="code"></textarea>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
     <script>
         document.getElementById('file-input').addEventListener('change', function(event) {
@@ -18,19 +18,62 @@
                 reader.onload = function(e) {
                     const arrayBuffer = e.target.result;
                     JSZip.loadAsync(arrayBuffer).then(function(zip) {
-                        return zip.file("project.json").async("string");
+                        return zip.file('project.json').async('string');
                     }).then(function(jsonStr) {
                         document.getElementById('output').textContent = jsonStr;
                         console.log(jsonStr);
                         const projectJson = JSON.parse(jsonStr);
                         console.log(projectJson);
                     }).catch(function(err) {
-                        console.error("Error reading zip file:", err);
+                        console.error('Error reading zip file:', err);
                     });
                 };
                 reader.readAsArrayBuffer(file);
             }
         });
+        document.getElementById('code').addEventListener('change', function(event) {
+            const tokens = [];
+            let currentToken = '';
+            for (let i = 0; i < document.getElementById('code').value.length; i++) {
+                const char = document.getElementById('code').value[i];
+
+                if (char === '(' || char === ')') {
+                    if (currentToken !== '') {
+                        tokens.push(currentToken);
+                        currentToken = '';
+                    }
+                    tokens.push(char);
+                } else if (char === ' ' || char === '\n' || char === ',') {
+                    if (currentToken !== '') {
+                        tokens.push(currentToken);
+                        currentToken = '';
+                    }
+                } else {
+                    currentToken += char;
+                }
+            }
+            if (currentToken !== '') {
+                tokens.push(currentToken);
+            }
+            let projectjson = {"targets":[{"isStage":true,"name":"Stage","variables":{},"lists":{},"broadcasts":{},"blocks":{},"comments":{},"currentCostume":0,"costumes":[{"name":"backdrop1","dataFormat":"svg","assetId":"cd21514d0531fdffb22204e0ec5ed84a","md5ext":"cd21514d0531fdffb22204e0ec5ed84a.svg","rotationCenterX":240,"rotationCenterY":180}],"sounds":[],"volume":100,"layerOrder":0,"tempo":60,"videoTransparency":50,"videoState":"on","textToSpeechLanguage":null},{"isStage":false,"name":"Sprite1","variables":{},"lists":{},"broadcasts":{},"blocks":{},"comments":{},"currentCostume":0,"costumes":[{"name":"costume1","bitmapResolution":1,"dataFormat":"svg","assetId":"3339a2953a3bf62bb80e54ff575dbced","md5ext":"3339a2953a3bf62bb80e54ff575dbced.svg","rotationCenterX":0,"rotationCenterY":0}],"sounds":[],"volume":100,"layerOrder":1,"visible":true,"x":36,"y":28,"size":100,"direction":90,"draggable":false,"rotationStyle":"all around"}],"monitors":[],"extensions":[],"meta":{"semver":"3.0.0","vm":"0.2.0","agent":"","platform":{"name":"TurboWarp","url":"https://turbowarp.org/"}}};
+            let parent = 0;
+            let blocks = [];
+            for (let i = 0; i < tokens.length; i++) {
+                if(Object.keys(blockopcode).includes(tokens[i])){
+                    blocks.push({'opcode':blockopcode[tokens[i]],'next':null,'parent':'a' + parent,'inputs':{},'fields':{},'shadow':false,'topLevel':false});
+                    parent++
+                }else if(tokens[i] === ')'){
+                    console.log(blocks[blocks.length - 1]);
+                    blocks.pop();
+                    blocks[blocks.length - 1].inputs[blockinput[blocks[blocks.length - 1].opcode].inputs[Object.keys(blocks[blocks.length - 1].inputs).length]] = 'test';
+                }else if(tokens[i] !== '('){
+                    blocks[blocks.length - 1].inputs[blockinput[blocks[blocks.length - 1].opcode].inputs[Object.keys(blocks[blocks.length - 1].inputs).length]] = 'test';
+                }
+            }
+            console.log(blocks);
+        });
+        blockinput = {'motion_movesteps': {'inputs': ['STEPS']}, 'operator_add': {'inputs': ['NUM1', 'NUM2']}};
+        blockopcode = {'steps': 'motion_movesteps', 'add': 'operator_add'}
     </script>
 </body>
 </html>
