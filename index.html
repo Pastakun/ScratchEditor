@@ -64,9 +64,6 @@
             let lastparent = null;
             for (let i = 0; i < tokens.length; i++) {
                 if(Object.keys(blockopcode).includes(tokens[i])){
-                    if(blockopcode[tokens[i]] === 'control_if_else'){
-                        lastparent = 'a' + parent;
-                    }
                     let blockjson = {'opcode':blockopcode[tokens[i]],'next':null,'inputs':{},'fields':{},'shadow':false,'topLevel':false};
                     if(parent === 0){
                         blockjson.parent = null;
@@ -88,15 +85,18 @@
                     }
                     blocks.push(blockjson);
                     blocksid.push('a' + parent);
+                    if(blockopcode[tokens[i]] === 'control_if_else'){
+                        lastparent = 'a' + parent;
+                    }
                     parent++
                 }else if(tokens[i] === ')' || tokens[i] === ','){
-                    if(tokens[i - 1] !== ')'){
+                    if(tokens[i - 1] !== ')' && tokens[i - 1] !== '('){
                         blocks[blocks.length - 1].inputs[blockinput[blocks[blocks.length - 1].opcode][Object.keys(blocks[blocks.length - 1].inputs).length]] = [1,[4,tokens[i - 1]]];
                     }
                     if(tokens[i] === ')'){
                         console.log(blocksid[blocksid.length - 1], blocks[blocks.length - 1]);
-                        let next = blocksid[blocksid.length - 1];
                         projectjson.targets[1].blocks[blocksid[blocksid.length - 1]] = blocks[blocks.length - 1];
+                        next = blocksid[blocksid.length - 1];
                         blocks.pop();
                         blocksid.pop();
                         //console.log(lastparent, blocksid[blocksid.length - 1]);
@@ -115,7 +115,7 @@
                             lastparent = next;
                         }
                     }else{
-                        if(tokens[i - 1] === ')' && blocks[blocks.length - 1].opcode === 'control_if_else'){
+                        if((tokens[i - 1] === ')' && blocks[blocks.length - 1].opcode === 'control_if_else')){
                             lastparent = blocksid[blocksid.length - 1];
                         }
                     }
