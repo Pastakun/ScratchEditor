@@ -7,8 +7,10 @@
 </head>
 <body>
     <input type="file" id="file-input" />
-    <pre id="output"></pre>
+    <pre id="jsonoutput"></pre>
     <textarea id="code"></textarea>
+    <br>
+    <textarea id="output"></textarea>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
     <script>
         document.getElementById('file-input').addEventListener('change', function(event) {
@@ -20,7 +22,7 @@
                     JSZip.loadAsync(arrayBuffer).then(function(zip) {
                         return zip.file('project.json').async('string');
                     }).then(function(jsonStr) {
-                        document.getElementById('output').textContent = jsonStr;
+                        document.getElementById('jsonoutput').textContent = jsonStr;
                         console.log(jsonStr);
                         const projectJson = JSON.parse(jsonStr);
                         console.log(projectJson);
@@ -55,25 +57,49 @@
             if (currentToken !== '') {
                 tokens.push(currentToken);
             }
-            let projectjson = {"targets":[{"isStage":true,"name":"Stage","variables":{},"lists":{},"broadcasts":{},"blocks":{},"comments":{},"currentCostume":0,"costumes":[{"name":"backdrop1","dataFormat":"svg","assetId":"cd21514d0531fdffb22204e0ec5ed84a","md5ext":"cd21514d0531fdffb22204e0ec5ed84a.svg","rotationCenterX":240,"rotationCenterY":180}],"sounds":[],"volume":100,"layerOrder":0,"tempo":60,"videoTransparency":50,"videoState":"on","textToSpeechLanguage":null},{"isStage":false,"name":"Sprite1","variables":{},"lists":{},"broadcasts":{},"blocks":{},"comments":{},"currentCostume":0,"costumes":[{"name":"costume1","bitmapResolution":1,"dataFormat":"svg","assetId":"3339a2953a3bf62bb80e54ff575dbced","md5ext":"3339a2953a3bf62bb80e54ff575dbced.svg","rotationCenterX":0,"rotationCenterY":0}],"sounds":[],"volume":100,"layerOrder":1,"visible":true,"x":36,"y":28,"size":100,"direction":90,"draggable":false,"rotationStyle":"all around"}],"monitors":[],"extensions":[],"meta":{"semver":"3.0.0","vm":"0.2.0","agent":"","platform":{"name":"TurboWarp","url":"https://turbowarp.org/"}}};
+            let projectjson = {"targets":[{"isStage":true,"name":"Stage","variables":{},"lists":{},"broadcasts":{},"blocks":{},"comments":{},"currentCostume":0,"costumes":[{"name":"backdrop1","dataFormat":"svg","assetId":"cd21514d0531fdffb22204e0ec5ed84a","md5ext":"cd21514d0531fdffb22204e0ec5ed84a.svg","rotationCenterX":240,"rotationCenterY":180}],"sounds":[],"volume":100,"layerOrder":0,"tempo":60,"videoTransparency":50,"videoState":"on","textToSpeechLanguage":null},{"isStage":false,"name":"Sprite1","variables":{},"lists":{},"broadcasts":{},"blocks":{},"comments":{},"currentCostume":0,"costumes":[{"name":"costume1","bitmapResolution":1,"dataFormat":"svg","assetId":"3339a2953a3bf62bb80e54ff575dbced","md5ext":"3339a2953a3bf62bb80e54ff575dbced.svg","rotationCenterX":0,"rotationCenterY":0}],"sounds":[],"volume":100,"layerOrder":1,"visible":true,"x":36,"y":28,"size":100,"direction":90,"draggable":false,"rotationStyle":"all around"}],"monitors":[],"extensions":[],"meta":{"semver":"3.0.0","vm":"0.2.0","agent":"","platform":{"name":"ScratchEditor","url":"https://pastakun.github.io/ScratchEditor/"}}};
             let parent = 0;
             let blocks = [];
+            let blocksid = [];
+            let lastparent = null;
             for (let i = 0; i < tokens.length; i++) {
                 if(Object.keys(blockopcode).includes(tokens[i])){
-                    blocks.push({'opcode':blockopcode[tokens[i]],'next':null,'parent':'a' + parent,'inputs':{},'fields':{},'shadow':false,'topLevel':false});
+                    let blockjson = {'opcode':blockopcode[tokens[i]],'next':null,'inputs':{},'fields':{},'shadow':false,'topLevel':false};
+                    if(parent === 0){
+                        blockjson.parent = null;
+                        blockjson.topLevel = true;
+                        blockjson.x = 0;
+                        blockjson.y = 0;
+                    }else{
+                        if(blocks.length === 0){
+                            blockjson.parent = lastparent;
+                            projectjson.targets[1].blocks[lastparent].next = 'a' + parent;
+                        }else{
+                            blockjson.parent = blocksid[blocksid.length - 1];
+                        }
+                    }
+                    blocks.push(blockjson);
+                    blocksid.push('a' + parent);
                     parent++
                 }else if(tokens[i] === ')'){
-                    console.log(blocks[blocks.length - 1]);
+                    console.log(blocksid[blocks.length - 1], blocks[blocks.length - 1]);
+                    let next = blocksid[blocksid.length - 1];
+                    projectjson.targets[1].blocks[blocksid[blocksid.length - 1]] = blocks[blocks.length - 1];
                     blocks.pop();
-                    blocks[blocks.length - 1].inputs[blockinput[blocks[blocks.length - 1].opcode].inputs[Object.keys(blocks[blocks.length - 1].inputs).length]] = 'test';
+                    blocksid.pop();
+                    if(blocks.length === 0){
+                        lastparent = next;
+                    }else{
+                        blocks[blocks.length - 1].inputs[blockinput[blocks[blocks.length - 1].opcode].inputs[Object.keys(blocks[blocks.length - 1].inputs).length]] = [3,next,[4,""]];
+                    }
                 }else if(tokens[i] !== '('){
-                    blocks[blocks.length - 1].inputs[blockinput[blocks[blocks.length - 1].opcode].inputs[Object.keys(blocks[blocks.length - 1].inputs).length]] = 'test';
+                    blocks[blocks.length - 1].inputs[blockinput[blocks[blocks.length - 1].opcode].inputs[Object.keys(blocks[blocks.length - 1].inputs).length]] = [1,[4,tokens[i]]];
                 }
             }
-            console.log(blocks);
+            document.getElementById('output').value = JSON.stringify(projectjson);
         });
-        blockinput = {'motion_movesteps': {'inputs': ['STEPS']}, 'operator_add': {'inputs': ['NUM1', 'NUM2']}};
-        blockopcode = {'steps': 'motion_movesteps', 'add': 'operator_add'}
+        const blockinput = {'motion_movesteps': {'inputs': ['STEPS']}, 'motion_turnright': {'inputs': ['DEGREES']}, 'operator_add': {'inputs': ['NUM1', 'NUM2']}};
+        const blockopcode = {'steps': 'motion_movesteps', 'right': 'motion_turnright','add': 'operator_add'}
     </script>
 </body>
 </html>
