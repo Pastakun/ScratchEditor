@@ -39,13 +39,13 @@
             for (let i = 0; i < document.getElementById('code').value.length; i++) {
                 const char = document.getElementById('code').value[i];
 
-                if (char === '(' || char === ')') {
+                if (char === '(' || char === ')' || char === ',') {
                     if (currentToken !== '') {
                         tokens.push(currentToken);
                         currentToken = '';
                     }
                     tokens.push(char);
-                } else if (char === ' ' || char === '\n' || char === ',') {
+                } else if (char === ' ' || char === '\n') {
                     if (currentToken !== '') {
                         tokens.push(currentToken);
                         currentToken = '';
@@ -64,6 +64,9 @@
             let lastparent = null;
             for (let i = 0; i < tokens.length; i++) {
                 if(Object.keys(blockopcode).includes(tokens[i])){
+                    if(blockopcode[tokens[i]] === 'control_if_else'){
+                        lastparent = 'a' + parent;
+                    }
                     let blockjson = {'opcode':blockopcode[tokens[i]],'next':null,'inputs':{},'fields':{},'shadow':false,'topLevel':false};
                     if(parent === 0){
                         blockjson.parent = null;
@@ -74,6 +77,11 @@
                         if(blocks.length === 0){
                             blockjson.parent = lastparent;
                             projectjson.targets[1].blocks[lastparent].next = 'a' + parent;
+                        }else if(blocks[blocks.length - 1].opcode === 'control_if_else'){
+                            blockjson.parent = lastparent;
+                            if(lastparent !== blocksid[blocksid.length - 1]){
+                                projectjson.targets[1].blocks[lastparent].next = 'a' + parent;
+                            }
                         }else{
                             blockjson.parent = blocksid[blocksid.length - 1];
                         }
@@ -81,25 +89,42 @@
                     blocks.push(blockjson);
                     blocksid.push('a' + parent);
                     parent++
-                }else if(tokens[i] === ')'){
-                    console.log(blocksid[blocks.length - 1], blocks[blocks.length - 1]);
-                    let next = blocksid[blocksid.length - 1];
-                    projectjson.targets[1].blocks[blocksid[blocksid.length - 1]] = blocks[blocks.length - 1];
-                    blocks.pop();
-                    blocksid.pop();
-                    if(blocks.length === 0){
-                        lastparent = next;
-                    }else{
-                        blocks[blocks.length - 1].inputs[blockinput[blocks[blocks.length - 1].opcode].inputs[Object.keys(blocks[blocks.length - 1].inputs).length]] = [3,next,[4,""]];
+                }else if(tokens[i] === ')' || tokens[i] === ','){
+                    if(tokens[i - 1] !== ')'){
+                        blocks[blocks.length - 1].inputs[blockinput[blocks[blocks.length - 1].opcode][Object.keys(blocks[blocks.length - 1].inputs).length]] = [1,[4,tokens[i - 1]]];
                     }
-                }else if(tokens[i] !== '('){
-                    blocks[blocks.length - 1].inputs[blockinput[blocks[blocks.length - 1].opcode].inputs[Object.keys(blocks[blocks.length - 1].inputs).length]] = [1,[4,tokens[i]]];
+                    if(tokens[i] === ')'){
+                        console.log(blocksid[blocksid.length - 1], blocks[blocks.length - 1]);
+                        let next = blocksid[blocksid.length - 1];
+                        projectjson.targets[1].blocks[blocksid[blocksid.length - 1]] = blocks[blocks.length - 1];
+                        blocks.pop();
+                        blocksid.pop();
+                        //console.log(lastparent, blocksid[blocksid.length - 1]);
+                        if(blocks.length !== 0){
+                            if(blocks[blocks.length - 1].opcode === 'control_if_else'){
+                                if(lastparent === blocksid[blocksid.length - 1]){
+                                    blocks[blocks.length - 1].inputs[blockinput[blocks[blocks.length - 1].opcode][Object.keys(blocks[blocks.length - 1].inputs).length]] = [3,next,[4,""]];
+                                }
+                            }else{
+                                blocks[blocks.length - 1].inputs[blockinput[blocks[blocks.length - 1].opcode][Object.keys(blocks[blocks.length - 1].inputs).length]] = [3,next,[4,""]];
+                            }
+                        }
+                        if(blocks.length === 0){
+                            lastparent = next;
+                        }else if(lastparent === blocksid[blocksid.length - 1]){
+                            lastparent = next;
+                        }
+                    }else{
+                        if(tokens[i - 1] === ')' && blocks[blocks.length - 1].opcode === 'control_if_else'){
+                            lastparent = blocksid[blocksid.length - 1];
+                        }
+                    }
                 }
             }
             document.getElementById('output').value = JSON.stringify(projectjson);
         });
-        const blockinput = {'motion_movesteps': {'inputs': ['STEPS']}, 'motion_turnright': {'inputs': ['DEGREES']}, 'operator_add': {'inputs': ['NUM1', 'NUM2']}};
-        const blockopcode = {'steps': 'motion_movesteps', 'right': 'motion_turnright','add': 'operator_add'}
+        const blockinput = {'motion_movesteps': ['STEPS'], 'motion_turnright': ['DEGREES'], 'operator_add': ['NUM1', 'NUM2'], 'event_whenflagclicked': [], 'control_if_else': ['CONDITION', 'SUBSTACK', 'SUBSTACK2'], 'operator_equals': ['OPERAND1', 'OPERAND2']};
+        const blockopcode = {'steps': 'motion_movesteps', 'right': 'motion_turnright','add': 'operator_add', 'start': 'event_whenflagclicked', 'ifelse': 'control_if_else', 'equals': 'operator_equals'}
     </script>
 </body>
 </html>
