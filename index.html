@@ -74,7 +74,7 @@
                         if(blocks.length === 0){
                             blockjson.parent = lastparent;
                             projectjson.targets[1].blocks[lastparent].next = 'a' + parent;
-                        }else if(blocks[blocks.length - 1].opcode === 'control_if_else'){
+                        }else if(konojiblock.includes(blocks[blocks.length - 1].opcode)){
                             blockjson.parent = lastparent;
                             if(lastparent === blocksid[blocksid.length - 1]){
                                 blocks[blocks.length - 1].inputs[blockinput[blocks[blocks.length - 1].opcode][Object.keys(blocks[blocks.length - 1].inputs).length]] = [3,'a' + parent,[4,""]];
@@ -88,7 +88,7 @@
                     }
                     blocks.push(blockjson);
                     blocksid.push('a' + parent);
-                    if(blockopcode[tokens[i]] === 'control_if_else'){
+                    if(konojiblock.includes(blockopcode[tokens[i]])){
                         lastparent = 'a' + parent;
                     }
                     parent++
@@ -108,7 +108,7 @@
                             lastparent = next;
                         }
                     }else{
-                        if((tokens[i - 1] === ')' && blocks[blocks.length - 1].opcode === 'control_if_else')){
+                        if(tokens[i - 1] === ')' && konojiblock.includes(blocks[blocks.length - 1].opcode)){
                             lastparent = blocksid[blocksid.length - 1];
                         }
                     }
@@ -116,8 +116,9 @@
             }
             document.getElementById('output').value = JSON.stringify(projectjson);
         });
-        const blockinput = {'motion_movesteps': ['STEPS'], 'motion_turnright': ['DEGREES'], 'operator_add': ['NUM1', 'NUM2'], 'event_whenflagclicked': [], 'control_if_else': ['CONDITION', 'SUBSTACK', 'SUBSTACK2'], 'operator_equals': ['OPERAND1', 'OPERAND2']};
-        const blockopcode = {'steps': 'motion_movesteps', 'right': 'motion_turnright','add': 'operator_add', 'start': 'event_whenflagclicked', 'ifelse': 'control_if_else', 'equals': 'operator_equals'}
+        const konojiblock = ['control_if_else', 'control_forever'];
+        const blockinput = {'motion_movesteps': ['STEPS'], 'motion_turnright': ['DEGREES'], 'operator_add': ['NUM1', 'NUM2'], 'event_whenflagclicked': [], 'control_if_else': ['CONDITION', 'SUBSTACK', 'SUBSTACK2'], 'operator_equals': ['OPERAND1', 'OPERAND2'], 'control_forever': ['SUBSTACK']};
+        const blockopcode = {'steps': 'motion_movesteps', 'right': 'motion_turnright','add': 'operator_add', 'start': 'event_whenflagclicked', 'ifelse': 'control_if_else', 'equals': 'operator_equals', 'forever': 'control_forever'};
     </script>
 </body>
 </html>
