@@ -6,8 +6,11 @@
     <title>ScratchEditor</title>
 </head>
 <body>
+    <h1>ScratchEditor</h1>
     <input type="file" id="file-input" />
     <pre id="jsonoutput"></pre>
+    <textarea id="block"></textarea>
+    <br>
     <textarea id="code"></textarea>
     <br>
     <textarea id="output"></textarea>
@@ -117,8 +120,9 @@
             document.getElementById('output').value = JSON.stringify(projectjson);
         });
         const konojiblock = ['control_if_else', 'control_forever'];
-        const blockinput = {'motion_movesteps': ['STEPS'], 'motion_turnright': ['DEGREES'], 'operator_add': ['NUM1', 'NUM2'], 'event_whenflagclicked': [], 'control_if_else': ['CONDITION', 'SUBSTACK', 'SUBSTACK2'], 'operator_equals': ['OPERAND1', 'OPERAND2'], 'control_forever': ['SUBSTACK']};
-        const blockopcode = {'steps': 'motion_movesteps', 'right': 'motion_turnright','add': 'operator_add', 'start': 'event_whenflagclicked', 'ifelse': 'control_if_else', 'equals': 'operator_equals', 'forever': 'control_forever'};
+        const blockinput = {'motion_movesteps': ['STEPS'], 'motion_turnright': ['DEGREES'], 'operator_add': ['NUM1', 'NUM2'], 'operator_subtract': ['NUM1', 'NUM2'], 'operator_multiply': ['NUM1', 'NUM2'], 'operator_divide': ['NUM1', 'NUM2'], 'event_whenflagclicked': [], 'control_if_else': ['CONDITION', 'SUBSTACK', 'SUBSTACK2'], 'operator_equals': ['OPERAND1', 'OPERAND2'], 'control_forever': ['SUBSTACK'], 'sensing_mousex': [], 'motion_xposition': [], 'operator_gt': ['OPERAND1', 'OPERAND2'], 'looks_seteffectto': ['EFFECT', 'VALUE']};
+        const blockopcode = {'steps': 'motion_movesteps', 'right': 'motion_turnright', '+': 'operator_add','-': 'operator_subtract', '*': 'operator_multiply', '/': 'operator_divide', 'start': 'event_whenflagclicked', 'ifelse': 'control_if_else', '=': 'operator_equals', 'forever': 'control_forever', 'mousex': 'sensing_mousex', 'xposition': 'motion_xposition', '>': 'operator_gt', 'effect': 'looks_seteffectto'};
+        document.getElementById('block').value = Object.keys(blockopcode);
     </script>
 </body>
 </html>
